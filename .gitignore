@@ -1,0 +1,3 @@
+/data
+data/annotations.csv
+model/model_swinvit.pt
