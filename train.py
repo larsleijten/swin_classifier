@@ -1,13 +1,19 @@
+import sys
+sys.path.append('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/')
+
 import monai
 import nibabel
 import tqdm
 import os
 import shutil
 import tempfile
+import random
+import csv
 
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
+import torch.nn as nn
 
 from torchvision.transforms import Compose, ToTensor, Normalize
 
@@ -30,7 +36,6 @@ from monai.transforms import (
 
 from monai.config import print_config
 from monai.metrics import DiceMetric
-from monai.networks.nets import SwinUNETR
 
 from monai.data import (
     ThreadDataLoader,
@@ -43,6 +48,18 @@ from monai.data import (
 
 import torch
 
+from swin_classifier.code import utils, dataset
+from swin_classifier.model import MLPhead, SwinEncoder, CombinedModel
+
+
+validation = utils.validation
+MLPhead = MLPhead.MLPhead
+SwinEncoder = SwinEncoder.SwinEncoder
+CombinedModel = CombinedModel.CombinedModel
+patchDataset = dataset.patchDataset
+featureDataset = dataset.patchDataset
+
+
 print_config()
 
 root_dir = "/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier"
@@ -54,8 +71,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 transforms = Compose([
-    ToTensor(),
-    Normalize(mean=[0.5], std=[0.5])
+    ToTensor()
 ])
 
 dataset = patchDataset('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/patches', transforms)
@@ -83,23 +99,59 @@ swin_weights = torch.load("/mnt/netcache/bodyct/experiments/scoliosis_simulation
 swin_encoder.load_from(weights=swin_weights)
 print("Using pretrained self-supervied Swin UNETR backbone weights")
 
-model.eval()
 
 
+mlp_head = MLPhead(20736).to(device)
 
-mlp_head = MLPhead(feature_vector.size(dim=0)).to(device)
+mlp_head.load_state_dict(torch.load('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_mlp.pth'))
 
-i=0
-for batch, labels in val_loader:
-    batch = batch[None, :].to(device=device, dtype = torch.half)
-    print(batch.size())
-    with torch.cuda.amp.autocast():
-        results = model(batch)
-    print(results.size()) # batch size will be (32, z, x, y)
-    print(labels.size())
-    if (i>5):
-        break
-    i+=1
+model = CombinedModel(swin_encoder, mlp_head)
 
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+loss_fn = torch.nn.BCELoss()
+
+epochs = 20
+random.seed(128)
+model.train()
+train_loss = []
+val_loss = []
+val_acc = []
+best_acc = 0
+for t in range(epochs):
+    print("Epoch number: " + str(t))
+    for i, (batch, labels) in enumerate(tqdm(train_loader)):
+        batch, labels = batch.to(device, dtype=torch.half), labels.to(device)
+        batch = batch[None, :].to(device=device, dtype = torch.half)
+        with torch.cuda.amp.autocast():
+            pred = model(batch)
+        
+        loss = loss_fn(pred, torch.tensor(labels, dtype=torch.half))
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        if i % 50 ==0:
+            print("Train loss: " + str(loss.item()))
+            train_loss.append(loss.item())
+    with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/combined_train.csv', mode='w', newline='') as loss_file:
+        writer = csv.writer(loss_file)
+        for l in train_loss:
+            writer.writerow([l])
+    model.eval()
+    valLoss, valAcc = validation(val_loader, model, loss_fn, device)
+    model.train()
+    val_loss.append(valLoss)
+    val_acc.append(valAcc)
+
+    if valAcc > best_acc:
+        best_acc = valAcc
+        dict_path = '/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_combined_model.pth'
+        torch.save(model.state_dict(), dict_path)
+
+    with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/combined_validation.csv', mode='w', newline='') as loss_file:
+        writer = csv.writer(loss_file)
+        for l in range(len(val_loss)):
+            writer.writerow([val_loss[l], val_acc[l]])
 
 
