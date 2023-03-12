@@ -57,7 +57,7 @@ MLPhead = MLPhead.MLPhead
 SwinEncoder = SwinEncoder.SwinEncoder
 CombinedModel = CombinedModel.CombinedModel
 patchDataset = dataset.patchDataset
-featureDataset = dataset.patchDataset
+featureDataset = dataset.featureDataset
 
 
 print_config()
@@ -71,7 +71,8 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 transforms = Compose([
-    ToTensor()
+    ToTensor(), 
+    Normalize(mean=[0.5], std=[0.5])
 ])
 
 dataset = patchDataset('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/patches', transforms)
@@ -139,7 +140,7 @@ for t in range(epochs):
             #print("Train loss: " + str(loss.item()))
             train_loss.append(total_loss / 50)
             total_loss = 0
-            print(pred)
+
     with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/combined_train.csv', mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in train_loss:
@@ -159,5 +160,8 @@ for t in range(epochs):
         writer = csv.writer(loss_file)
         for l in range(len(val_loss)):
             writer.writerow([val_loss[l], val_acc[l]])
+
+dict_path = '/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/last_combined_model.pth'
+torch.save(model.state_dict(), dict_path)
 
 

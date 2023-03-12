@@ -1,3 +1,7 @@
 /data
 data/annotations.csv
 model/model_swinvit.pt
+model/best_combined_model.pth
+model/best_mlp.pth
+
+

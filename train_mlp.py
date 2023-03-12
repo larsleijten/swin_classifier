@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/')
+
 import monai
 import nibabel
 import tqdm
@@ -14,29 +17,17 @@ from torch.utils.data import DataLoader, random_split
 
 from torchvision.transforms import Compose, ToTensor, Normalize
 
-def validation(val_loader, mlp_head, loss_fn, device):
-    size = len(val_loader.dataset)
-    num_batches = len(val_loader)
-    mlp_head.eval()
-    test_loss, correct = 0, 0
-    # Do not keep track of gradients
-    with torch.no_grad():
-        # Loop over the batches in the dataloader
-        for X, y in val_loader:
-            X, y = X.to(device), y.to(device)
-            # Model predictions
-            pred = mlp_head(X)
+from swin_classifier.code import utils, dataset
+from swin_classifier.model import MLPhead, SwinEncoder, CombinedModel
 
-            # Make a binary prediction at the threshold of 0.5
-            bin_pred = torch.round(pred).transpose(0,1)
-            # Keep track of loss and accuracy
-            test_loss += loss_fn(pred, y.unsqueeze(1).float()).item()
-            correct += (bin_pred == y).type(torch.float).sum().item()
-    test_loss /= num_batches
-    correct /= size
-    print(f"Validation Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-    
-    return test_loss, (100*correct)
+
+validation = utils.validation
+MLPhead = MLPhead.MLPhead
+SwinEncoder = SwinEncoder.SwinEncoder
+CombinedModel = CombinedModel.CombinedModel
+patchDataset = dataset.patchDataset
+featureDataset = dataset.patchDataset
+
 
 root_dir = "/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier"
 os.chdir(root_dir)
@@ -71,20 +62,23 @@ train_loss = []
 val_loss = []
 val_acc = []
 best_acc = 0
+total_loss = 0
 for t in range(epochs):
     print(t)
     for i, (features, labels) in enumerate(tqdm(train_loader)):
         features, labels = features.to(device), labels.to(device)
         pred = mlp_head(features)
         loss = loss_fn(pred, torch.tensor(labels.unsqueeze(1), dtype=torch.float))
-
+        total_loss = total_loss + loss.item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         
-        if i % 100 ==0:
-            print("Loss: " + str(loss.item()))
-            train_loss.append(loss.item())
+        if i % 50 ==0:
+            print("Loss: " + str(total_loss / 50))
+            train_loss.append(total_loss / 50)
+            total_loss = 0
+            print(pred)
     with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/mlp_train.csv', mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in train_loss:
