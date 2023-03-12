@@ -1,4 +1,4 @@
-# Swin Lung Nodule Classifier
+# Swin ViT Lung Nodule Classifier
 
 This repository was built as a small demonstration of my coding skills, data management and applied knowledge of deep learning techniques. The selected task is derived from the Luna16 challenge. The task is to classify whether clinical follow-up is required, based on the provided coordinates of a specific lung nodule candidate. Due to the limited time which was available to me, the intended purpose of this project is not neccesarily to create a high-performance solution. Instead, it aims to technically implement a more creative solution. 
 
@@ -21,18 +21,19 @@ The candidates dataset consisted of about 700,000 candidates, with approximately
 
 ## Training
 
-Initially, I saved the feature vectors which the Swin Encoder derived from the patches to efficiently train the MLP-head before training the entire model. This method did not produce any accurate results on the validation data. Consequently I decided to train the Swin Encoder and MLP-head only as a combined model. 
+Initially, I saved the feature vectors which the Swin Encoder derived from the patches to efficiently train the MLP-head before training the entire model. This method did not produce any accurate results on the validation data. Consequently, I decided to train the Swin Encoder and MLP-head fully as a combined model. 
 
 ## Results
 
-After training for 10 epochs over the training data the model reached a classification accuracy of 75.4% over the validation set. 
+After training for 10 epochs over the training data, the model reached a classification accuracy of 75.4% over the validation set. 
 
 The train loss and validation accuracy are plotted in figure 3.
 
 __Figure 3__
+
 ![Figure 3](https://raw.githubusercontent.com/larsleijten/swin_classifier/main/imgs/results%201-10.png "Figure 3")
 
-Although model performance was not the main purpose of this project,the current result is still somewhat underwhelming. I will try to make a few adaptations in the upcoming days to increase model performance. These adaptations include tackling the exploding gradient problem I ran into and adding some data augmentations.
+Although model performance was not the main purpose of this project, the current result is still somewhat underwhelming. I will try to make a few adaptations in the upcoming days to increase model performance. These adaptations include tackling the exploding gradient problem I ran into and adding some data augmentations.
 
 ## My Contribution
 
