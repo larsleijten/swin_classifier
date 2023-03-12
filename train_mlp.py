@@ -1,14 +1,11 @@
 import sys
 sys.path.append('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/')
 
-import monai
-import nibabel
 import tqdm
 import os
 import csv
 import random
 import torch
-import torch.nn as nn
 
 
 import matplotlib.pyplot as plt
@@ -17,9 +14,10 @@ from torch.utils.data import DataLoader, random_split
 
 from torchvision.transforms import Compose, ToTensor, Normalize
 
+
+# Import created classes
 from swin_classifier.code import utils, dataset
 from swin_classifier.model import MLPhead, SwinEncoder, CombinedModel
-
 
 validation = utils.validation
 MLPhead = MLPhead.MLPhead
@@ -37,16 +35,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 transforms = None
 
+# Create dataset
 dataset = featureDataset('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/features', transforms)
-# define the sizes of the training and validation sets
 dataset_size = len(dataset)
 train_size = int(0.8 * dataset_size)
 val_size = dataset_size - train_size
 
-# split the dataset into training and validation sets
+# Split the dataset into training and validation sets
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-# create data loaders for the training and validation sets
+# Create data loaders for the training and validation sets
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=64, shuffle=True)
 
@@ -55,6 +53,7 @@ mlp_head = MLPhead(20736).to(device)
 optimizer = torch.optim.Adam(mlp_head.parameters(), lr=1e-4)
 loss_fn = torch.nn.BCELoss()
 
+# Set training parameters
 epochs = 20
 random.seed(128)
 mlp_head.train()
@@ -74,11 +73,13 @@ for t in range(epochs):
         loss.backward()
         optimizer.step()
         
+        # Track the training loss
         if i % 50 ==0:
             print("Loss: " + str(total_loss / 50))
             train_loss.append(total_loss / 50)
             total_loss = 0
             print(pred)
+    # Each epoch, save the training loss to a CSV file        
     with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/mlp_train.csv', mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in train_loss:
@@ -87,11 +88,13 @@ for t in range(epochs):
     val_loss.append(valLoss)
     val_acc.append(valAcc)
 
+    # Save the best performing model
     if valAcc > best_acc:
         best_acc = valAcc
         dict_path = '/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_mlp.pth'
         torch.save(mlp_head.state_dict(), dict_path)
-
+    
+    # Save the validation loss and accuracy
     with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/mlp_validation.csv', mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in range(len(val_loss)):

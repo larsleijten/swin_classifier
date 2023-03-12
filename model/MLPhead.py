@@ -11,9 +11,11 @@ class MLPhead(nn.Module):
         self.fc3 = nn.Linear(256, 1)
         
     def forward(self, x):
-        x = nn.functional.relu(self.fc1(x))
+        x = nn.LayerNorm(512)(self.fc1(x))
+        x = nn.functional.relu(x)
         x = self.dropout1(x)
-        x = nn.functional.relu(self.fc2(x))
+        x = nn.LayerNorm(256)(self.fc2(x))
+        x = nn.functional.relu(x)
         x = self.dropout2(x)
         x = torch.sigmoid(self.fc3(x))
         return x

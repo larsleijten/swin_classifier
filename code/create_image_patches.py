@@ -1,15 +1,15 @@
-
-import time
 import csv
 import os
 from tiger.io import read_image, write_image
 import numpy as np
 
+# Create a file where the labels are stored
 
 with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/labels.csv', mode='w', newline='') as output_file:
     writer = csv.writer(output_file)
     writer.writerow(["PatchID", "label"])
-# Open the CSV file
+
+# Open the CSV file with the candidates
 with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/candidates_V2.csv', newline='') as input_file:
     
     # Create a CSV reader object
@@ -34,7 +34,9 @@ with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_class
                 print("Working on CT scan with ID: " + scanID)
                 ct_file_path = os.path.join('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/combined', scanID + ".nii.gz")
                 temp_image, header = read_image(ct_file_path)
+            
                 # Manually implement zero padding, which is less computationally expensive
+                # Padding is added because the patches can partly lay outside the CT frame
                 image = np.zeros(
                     (temp_image.shape[0] + 96, temp_image.shape[1] + 96, temp_image.shape[2] + 96)
                 )
@@ -49,7 +51,7 @@ with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_class
                 coordY = int((coordY - header.origin[1]) / header.spacing[1])
                 coordZ = int((coordZ - header.origin[2]) / header.spacing[2])
                 
-                # Takes the padding into account
+                # This takes the padding into account
                 startX = coordX
                 stopX = coordX + 96
                 startY = coordY
@@ -57,6 +59,7 @@ with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_class
                 startZ = coordZ 
                 stopZ = coordZ + 96
                 
+                # Save the patch
                 new_image = image[startX:stopX, startY:stopY, startZ:stopZ]
                 patch_path = os.path.join('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/patches', str(patch_id) + ".nii.gz")
                 write_image(patch_path, new_image, header)
