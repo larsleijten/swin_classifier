@@ -1,3 +1,5 @@
+import torch
+
 def validation(val_loader, model, loss_fn, device):
     size = len(val_loader.dataset)
     num_batches = len(val_loader)

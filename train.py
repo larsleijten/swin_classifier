@@ -103,20 +103,24 @@ print("Using pretrained self-supervied Swin UNETR backbone weights")
 
 mlp_head = MLPhead(20736).to(device)
 
-mlp_head.load_state_dict(torch.load('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_mlp.pth'))
+#mlp_head.load_state_dict(torch.load('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_mlp.pth'))
 
 model = CombinedModel(swin_encoder, mlp_head)
+
+for param in model.parameters():
+    param.requires_grad = True
 
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 loss_fn = torch.nn.BCELoss()
 
-epochs = 20
+epochs = 50
 random.seed(128)
 model.train()
 train_loss = []
 val_loss = []
 val_acc = []
 best_acc = 0
+total_loss = 0
 for t in range(epochs):
     print("Epoch number: " + str(t))
     for i, (batch, labels) in enumerate(tqdm(train_loader)):
@@ -126,14 +130,16 @@ for t in range(epochs):
             pred = model(batch)
         
         loss = loss_fn(pred, torch.tensor(labels, dtype=torch.half))
-
+        total_loss = total_loss + loss.item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         
         if i % 50 ==0:
-            print("Train loss: " + str(loss.item()))
-            train_loss.append(loss.item())
+            #print("Train loss: " + str(loss.item()))
+            train_loss.append(total_loss / 50)
+            total_loss = 0
+            print(pred)
     with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/combined_train.csv', mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in train_loss:

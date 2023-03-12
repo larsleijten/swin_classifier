@@ -21,7 +21,11 @@ class patchDataset(Dataset):
         image = nib.load(self.data[idx])
         data = image.get_fdata()
         data = np.transpose(data, (2, 0, 1))
-        label = self.labels.iloc[idx][1]
+        no_ext = self.data[idx].split(".nii", 1)[0]
+        label_id = int(no_ext.split("/patches/",1)[1])
+        label = self.labels.iloc[label_id][1]
+
+
         # apply any transformations to the image and label
         if self.transform is not None:
             data = self.transform(data)
@@ -40,7 +44,10 @@ class featureDataset(Dataset):
     def __getitem__(self, idx):
         # read the image and label using the NiftiReader
         tensor = torch.load(self.data[idx])
-        label = self.labels.iloc[idx][1]
+        
+        no_ext = self.data[idx].split(".pt", 1)[0]
+        label_id = int(no_ext.split("/features/",1)[1])
+        label = self.labels.iloc[label_id][1]
 
         # apply any transformations to the image and label
         if self.transform is not None:
