@@ -7,9 +7,11 @@ This repository was built as a small demonstration of my coding skills, data man
 I used a pretrained [Swin UNETR model](https://docs.monai.io/en/stable/_modules/monai/networks/nets/swin_unetr.html#SwinUNETR), which was trained to segment brain tumours in CT scans by [Hatamizadeh et al.](https://arxiv.org/abs/2201.01266). The architecture of this model is displayed in Figure 1. I used the pretrained ViT-encoder to extract features from the image and removed the rest of the model. Furthermore, I designed a MLP-head which was used to classify the clinical follow-up, based on these image features as shown in Figure 2.
 
 __Figure 1__
+
 ![Figure 1](https://raw.githubusercontent.com/larsleijten/swin_classifier/main/imgs/swin_unetr.png "Figure 1")
 
 __Figure 2__
+
 ![Figure 2](https://raw.githubusercontent.com/larsleijten/swin_classifier/main/imgs/my_model.png "Figure 2")
 
 
@@ -23,11 +25,14 @@ Initially, I saved the feature vectors which the Swin Encoder derived from the p
 
 ## Results
 
-After training for 50 epochs over the training data the model reached a classification accuracy of **ENTER OPTIMAL RESULT** over the validation set. The measured sensitivity was **SENSITIVITY** and the specificity was **SPECIFICITY**. 
+After training for 10 epochs over the training data the model reached a classification accuracy of 75.4% over the validation set. 
 
 The train loss and validation accuracy are plotted in figure 3.
 
-Currently, this result is still a bit underwhelming. I will try to make a few adaptations in the upcoming days, to increase model performance.
+__Figure 3__
+![Figure 3](https://raw.githubusercontent.com/larsleijten/swin_classifier/main/imgs/results%201-10.png "Figure 3")
+
+Although model performance was not the main purpose of this project,the current result is still somewhat underwhelming. I will try to make a few adaptations in the upcoming days to increase model performance. These adaptations include tackling the exploding gradient problem I ran into and adding some data augmentations.
 
 ## My Contribution
 
@@ -39,4 +44,4 @@ In this project, I designed and wrote the code for:
 - The model combining the Swin Encoder and the MLP-head
 - The training and validation loops
 
-The code for the Swin Encoder was derived from code for a [Swin UNETR model](https://docs.monai.io/en/stable/_modules/monai/networks/nets/swin_unetr.html#SwinUNETR), which I reduced to only include the ViT encoder.
+The only mostly external code was the code for the Swin Encoder. This derived from code for a [Swin UNETR model](https://docs.monai.io/en/stable/_modules/monai/networks/nets/swin_unetr.html#SwinUNETR), which I reduced to only include the ViT encoder.
