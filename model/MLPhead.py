@@ -25,7 +25,7 @@ class MLPhead(nn.Module):
 
 class oldMLPhead(nn.Module):
     def __init__(self, input_shape):
-        super(MLPhead, self).__init__()
+        super(oldMLPhead, self).__init__()
         self.fc1 = nn.Linear(input_shape, 512)
         self.dropout1 = nn.Dropout(0.5)
         self.fc2 = nn.Linear(512, 256)
