@@ -52,7 +52,7 @@ plt.show()
 plt.plot(range(1, 11), val_accuracies)
 plt.title("Validation Accuracy")
 plt.xlabel("Epoch")
-plt.ylabel("Loss")
+plt.ylabel("Accuracy (%)")
 plt.show()
 
 

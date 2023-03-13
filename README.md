@@ -25,7 +25,7 @@ Initially, I saved the feature vectors which the Swin Encoder derived from the p
 
 ## Results
 
-After training for 10 epochs over the training data, the model reached a classification accuracy of 75.4% over the validation set. 
+After training for 10 epochs over the training data, the model reached a classification accuracy of 80.5% over the validation set. 
 
 The train loss and validation accuracy are plotted in figure 3.
 

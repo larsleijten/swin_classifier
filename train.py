@@ -72,7 +72,7 @@ for param in model.parameters():
 
 
 # Define optimizer and loss function
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 loss_fn = torch.nn.BCELoss().to(device)
 
 epochs = 50
@@ -87,9 +87,9 @@ total_loss = 0
 # Start training
 for t in range( epochs):
     print("Epoch number: " + str(t))
-    for param in model.parameters():
+    #for param in model.parameters():
         # To prevent NaN outputs
-        param = torch.clamp(param, min = -10.0, max = 10.0)
+        #param = torch.clamp(param, min = -10.0, max = 10.0)
     for i, (batch, labels) in enumerate(tqdm(train_loader)):
         batch, labels = batch.to(device, dtype=torch.float), labels.to(device)
         batch = batch[None, :].to(device=device, dtype = torch.float)
@@ -103,7 +103,7 @@ for t in range( epochs):
         optimizer.zero_grad()
         loss.backward()
         # Gradient clipping to prevent exploding gradients
-        nn.utils.clip_grad_value_(model.parameters(), 1.0)
+        #nn.utils.clip_grad_value_(model.parameters(), 1.0)
         optimizer.step()
         
         # Track training loss
