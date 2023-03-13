@@ -25,13 +25,13 @@ Initially, I saved the feature vectors which the Swin Encoder derived from the p
 
 ## Results
 
-After training for 10 epochs over the training data, the model reached a classification accuracy of 80.5% over the validation set. 
+After training for 12 epochs over the training data, the model reached a classification accuracy of 80.5% over the validation set. 
 
 The train loss and validation accuracy are plotted in figure 3.
 
 __Figure 3__
 
-![Figure 3](https://raw.githubusercontent.com/larsleijten/swin_classifier/main/imgs/results%201-10.png "Figure 3")
+![Figure 3](https://raw.githubusercontent.com/larsleijten/swin_classifier/main/imgs/results%201-12.png "Figure 3")
 
 Although model performance was not the main purpose of this project, the current result is still somewhat underwhelming. I will try to make a few adaptations in the upcoming days to increase model performance. These adaptations include tackling the exploding gradient problem I ran into and adding some data augmentations.
 
