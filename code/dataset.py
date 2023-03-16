@@ -29,8 +29,23 @@ class patchDataset(Dataset):
 
 
         # Apply any transformations to the image and label
+        # Transform all possible rotations and flips
         if self.transform is not None:
             data = self.transform(data)
+            rand = np.random.rand(6)
+            if rand[0]>0.5:
+                torch.flip(data, [0])
+            if rand[1]>0.5:
+                torch.flip(data, [1])
+            if rand[2]>0.5:
+                torch.flip(data, [2])
+            if rand[3]>0.5:
+                torch.transpose(data, 0, 1)
+            if rand[4]>0.5:
+                torch.transpose(data, 0, 2)
+            if rand[5]>0.5:
+                torch.transpose(data, 1, 2)
+            
 
         return data, label
 

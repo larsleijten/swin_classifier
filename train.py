@@ -8,6 +8,7 @@ import random
 import csv
 import torch
 import torch.nn as nn
+import numpy as np
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
@@ -31,7 +32,9 @@ root_dir = "/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_clas
 os.chdir(root_dir)
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-random.seed(128)
+random.seed(64)
+np.random.seed(64)
+torch.manual_seed(64)
 
 transforms = Compose([
     ToTensor(), 
@@ -65,6 +68,7 @@ swin_encoder.load_from(weights=swin_weights)
 # Create the MLP-head
 mlp_head = MLPhead(20736).to(device, dtype=torch.float)
 
+
 # Combine the two models make sure all parameters are training
 model = CombinedModel(swin_encoder, mlp_head).to(device, dtype=torch.float)
 #model.load_state_dict(torch.load("/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_combined_model.pth"))
@@ -74,10 +78,9 @@ for param in model.parameters():
 
 # Define optimizer and loss function
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-loss_fn = torch.nn.BCELoss().to(device)
+loss_fn = nn.BCEWithLogitsLoss().to(device)
 
 epochs = 50
-random.seed(128)
 model.train()
 train_loss = []
 val_loss = []
@@ -86,20 +89,20 @@ best_acc = 0
 total_loss = 0
 
 # Start training
-for t in range( epochs):
+for t in range(epochs):
     print("Epoch number: " + str(t))
     #for param in model.parameters():
         # To prevent NaN outputs
         #param = torch.clamp(param, min = -10.0, max = 10.0)
     for i, (batch, labels) in enumerate(tqdm(train_loader)):
-        batch, labels = batch.to(device, dtype=torch.float), labels.to(device)
-        batch = batch[None, :].to(device=device, dtype = torch.float)
+        batch, labels = batch[None, :].to(device=device, dtype = torch.float), labels.to(device)
         # Call model
         with torch.cuda.amp.autocast():
-            pred = model(batch)
+            pred = model(batch)        
+            # Calculate loss and backpropagate
+            loss = loss_fn(pred, torch.tensor(labels, dtype=torch.half))
         
         # Calculate loss and backpropagate
-        loss = loss_fn(pred, torch.tensor(labels, dtype=torch.half))
         total_loss = total_loss + loss.item()
         optimizer.zero_grad()
         loss.backward()

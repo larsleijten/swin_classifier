@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 
 # Declare validation function 
 def validation(val_loader, model, loss_fn, device):
@@ -17,7 +18,8 @@ def validation(val_loader, model, loss_fn, device):
             with torch.cuda.amp.autocast():
                 pred = model(X).to(device, dtype = torch.float)
             
-            
+            sigmoid = nn.Sigmoid()
+            pred = sigmoid(pred)
 
             # Make a binary prediction at the threshold of 0.5
             bin_pred = torch.round(pred.unsqueeze(1))#.transpose(0,1)

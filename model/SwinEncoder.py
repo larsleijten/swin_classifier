@@ -141,6 +141,16 @@ class SwinEncoder(nn.Module):
             downsample=look_up_option(downsample, MERGING_MODE) if isinstance(downsample, str) else downsample,
         )
 
+        #self.encoder10 = UnetrBasicBlock(
+        #    spatial_dims=spatial_dims,
+        #    in_channels=16 * feature_size,
+        #    out_channels=16 * feature_size,
+        #    kernel_size=3,
+        #    stride=1,
+        #    norm_name=norm_name,
+        #    res_block=True,
+        #)
+
         
 
 
@@ -196,6 +206,8 @@ class SwinEncoder(nn.Module):
 
     def forward(self, x_in):
             hidden_states_out = self.swinViT(x_in, self.normalize)
+            #dec4 = self.encoder10(hidden_states_out[4])
+            #features = torch.flatten(dec4)
             features = torch.flatten(hidden_states_out[4])
             return features
 
