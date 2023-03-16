@@ -17,7 +17,7 @@ __Figure 2__
 
 ## Data
 
-The candidates dataset consisted of about 700,000 candidates, with approximately 1500 of those requiring follow-up. To speed up training times for this project, I decided to work with image patches with centered candidates. With regard to data storage, I selected all 1500 positive candidates and about 2000 negative candidates and saved the patches. The dataset was split 80:20 over a train and validation set.
+The candidates dataset consisted of about 700,000 candidates, with approximately 1500 of those requiring follow-up. To speed up training times for this project, I decided to work with image patches with centered candidates. With regard to data storage, I selected all 1500 positive candidates and about 2000 negative candidates and saved the patches. The dataset was split 80:20 over a train and validation set. I coded data augmentations for all random possible flips and 90 degree rotations. 
 
 ## Training
 
@@ -25,7 +25,7 @@ Initially, I saved the feature vectors which the Swin Encoder derived from the p
 
 ## Results
 
-After training for 12 epochs over the training data, the model reached a classification accuracy of 85.4% over the validation set. Sensitivity was measured at 72.1% and specificity at 92.3% at a cutoff value of 0.5.
+After training for 30 epochs over the training data, the model reached an optimal classification accuracy of 85.4% over the validation set. Sensitivity was measured at 72.1% and specificity at 92.3% at a cutoff value of 0.5.
 
 The train loss and validation accuracy are plotted in figure 3.
 
