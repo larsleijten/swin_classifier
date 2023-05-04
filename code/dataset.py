@@ -1,10 +1,9 @@
 import os
-import csv
-import torch
+
+import nibabel as nib
 import numpy as np
 import pandas as pd
-import nibabel as nib
-
+import torch
 from torch.utils.data import Dataset
 
 
@@ -51,9 +50,9 @@ class patchDataset(Dataset):
 
 # The dataset that reads feature vectors and their labels
 class featureDataset(Dataset):
-    def __init__(self, data_dir, transform=None):
+    def __init__(self, data_dir, transform=None, path='/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/feature_labels.csv'):
         self.data = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.pt')]
-        self.labels = pd.read_csv('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/feature_labels.csv')
+        self.labels = pd.read_csv(path)
         self.transform = transform
 
     def __len__(self):
