@@ -62,4 +62,4 @@ class featureDataset(Dataset):
 
     def __getitem__(self, idx):
         # Return the feature vector and matching label
-        return json.loads(self.data[idx]), self.labels[idx]
+        return np.array(json.loads(self.data[idx])), self.labels[idx]

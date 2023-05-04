@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 sys.path.append('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/')
 
@@ -24,7 +25,7 @@ def validation(val_loader, model, loss_fn, device):
     size = len(val_loader.dataset)
     num_batches = len(val_loader)
     model.eval()
-    test_loss, correct, TP, TN, FP, FN = 0, 0, 0, 0, 0, 0
+    test_loss, correct, TP, TN, FP, FN, total = 0, 0, 0, 0, 0, 0, 0
     # Do not keep track of gradients
     with torch.no_grad():
         # Loop over the batches in the dataloader
@@ -32,9 +33,8 @@ def validation(val_loader, model, loss_fn, device):
             X, y = X.to(device, dtype=torch.float), y.to(device, dtype=torch.float)
 
             # Model predictions
-            X = X[None, :].to(device=device, dtype = torch.float)
             with torch.cuda.amp.autocast():
-                pred = model(X).to(device, dtype = torch.float)
+                pred = model(X).to(device, dtype=torch.float)
 
             sigmoid = nn.Sigmoid()
             pred = sigmoid(pred)
@@ -44,22 +44,23 @@ def validation(val_loader, model, loss_fn, device):
 
             # Keep track of loss and accuracy
             test_loss += loss_fn(pred.squeeze().unsqueeze(1), y.unsqueeze(1).float()).item()
-            correct += (bin_pred == y).type(torch.float).sum().item()
+            correct += (bin_pred.squeeze() == y.squeeze()).type(torch.float).sum().item()
+            total += len(y)
             #TP += (bin_pred == y and bin_pred == torch.tensor(1.0)).type(torch.float).sum().item()
             #TN += (bin_pred == y and bin_pred == torch.tensor(0.0)).type(torch.float).sum().item()
             #FP += (bin_pred != y and bin_pred == torch.tensor(1.0)).type(torch.float).sum().item()
             #FN += (bin_pred != y and bin_pred == torch.tensor(0.0)).type(torch.float).sum().item()
 
     test_loss /= num_batches
-    correct /= (size * 64)
-    #sensitivity = TP / (TP + FN + 0.0001) * 100
-    #specificity = TN / (TN + FP + 0.0001) * 100
-    print(f"Validation Error: \n Accuracy: {(correct):>0.1%}, Avg loss: {test_loss:>8f}" )
+    accuracy = correct / total
+    #sensitivity = TP / (TP + FN + 0.0001)
+    #specificity = TN / (TN + FP + 0.0001)
+    print(f"Validation Error: \n Accuracy: {(accuracy):>0.1%}, Avg loss: {test_loss:>8f}" )
 
-    return test_loss, correct
+    return test_loss, accuracy
 
 
-root_dir = "/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier"
+root_dir = Path("/Users/joeranbosma/tmp/")
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,7 +70,7 @@ torch.manual_seed(64)
 
 
 # Create dataset
-dataset = featureDataset('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/features')
+dataset = featureDataset(root_dir / 'data/ct_images/features.csv')
 dataset_size = len(dataset)
 train_size = int(0.8 * dataset_size)
 val_size = dataset_size - train_size
@@ -92,27 +93,27 @@ train_loss = []
 val_loss = []
 val_acc = []
 best_acc = 0
-total_loss = 0
 for epoch in range(epochs):
     print(f"Epoch {epoch}")
     mlp_head.train()
-    for i, (features, labels) in enumerate(tqdm(train_loader)):
-        features, labels = features.to(device), labels.to(device)
-        pred = mlp_head(features)
-        loss = loss_fn(pred, torch.tensor(labels.unsqueeze(1), dtype=torch.float))
-        total_loss = total_loss + loss.item()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+    train_losses = []
+    with tqdm(train_loader, desc="Train") as pbar:
+        for i, (features, labels) in enumerate(pbar):
+            features, labels = features.to(device, dtype=torch.float), labels.to(device)
+            pred = mlp_head(features)
+            loss = loss_fn(pred.type(torch.float), labels.unsqueeze(1).type(torch.float))
+            train_losses.append(loss.item())
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        # Track the training loss
-        if i % 50 ==0:
-            print("Loss: " + str(total_loss / 50))
-            train_loss.append(total_loss / 50)
-            total_loss = 0
+            # update progress bar
+            pbar.set_postfix(loss=np.mean(train_losses))
 
-    # Each epoch, save the training loss to a CSV file        
-    with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/mlp_train.csv', mode='w', newline='') as loss_file:
+    # Each epoch, save the training loss to a CSV file
+    path = root_dir / 'results/mlp_train.csv'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in train_loss:
             writer.writerow([l])
@@ -125,11 +126,11 @@ for epoch in range(epochs):
     # Save the best performing model
     if valAcc > best_acc:
         best_acc = valAcc
-        dict_path = '/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_mlp.pth'
+        dict_path = root_dir / 'model/best_mlp.pth'
         torch.save(mlp_head.state_dict(), dict_path)
 
     # Save the validation loss and accuracy
-    with open('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/results/mlp_validation.csv', mode='w', newline='') as loss_file:
+    with open(root_dir / 'results/mlp_validation.csv', mode='w', newline='') as loss_file:
         writer = csv.writer(loss_file)
         for l in range(len(val_loss)):
             writer.writerow([val_loss[l], val_acc[l]])
