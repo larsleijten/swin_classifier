@@ -52,61 +52,32 @@ def main(
         use_checkpoint=True,
     ).to(device, dtype=torch.float)
 
-    swin_weights = torch.load(root_dir / "model/model_swinvit.pt")
-    swin_encoder.load_from(weights=swin_weights)
-
     # Create the MLP-head
     mlp_head = MLPhead(20736).to(device, dtype=torch.float)
-
 
     # Combine the two models make sure all parameters are training
     model = CombinedModel(swin_encoder, mlp_head).to(device, dtype=torch.float)
     model.load_state_dict(torch.load(root_dir / "model/best_combined_model.pth"))
-    params = model.swin_encoder.state_dict()
 
-    torch.save(params, root_dir / "model/combined_model_swin_encoder.pth")
-
-    # Create the SwinEncoder which will encode the patches
-    model = SwinEncoder(
-        img_size=(96, 96, 96),
-        in_channels=1,
-        out_channels=1,
-        feature_size=48,
-        use_checkpoint=True,
-    ).to(device)
-
-    # Load pretrained weights
-
-    model.load_state_dict(params)
-    print("Using pretrained self-supervied Swin UNETR backbone weights!")
-
-    # No need to track gradients
+    # No need to do dropout or batchnorm
     model.eval()
 
-    # Create a file which saves the labels of the features
-    with open(root_dir / "data/feature_labels.csv", mode="w", newline="") as output_file:
+    with torch.no_grad(), open(root_dir / "data/feature_labels.csv", mode="w") as output_file:
         writer = csv.writer(output_file)
         writer.writerow(["PatchID", "label"])
 
-    # Create features
-    patch_id = 0
-    for batch, label in tqdm(data_loader):
-        batch = batch[None, :].to(device=device, dtype = torch.half)
-        with torch.cuda.amp.autocast():
-            feature_vector = model(batch)
+        # Create features
+        patch_id = 0
+        for batch, label in tqdm(data_loader):
+            batch = batch[None, :].to(device=device, dtype = torch.half)
+            with torch.cuda.amp.autocast():
+                feature_vector = swin_encoder(batch)
+                prediction = mlp_head(feature_vector)
 
-        # Add the feature label
-        with open(root_dir / "data/feature_labels.csv", mode="a", newline="") as output_file:
-                        writer = csv.writer(output_file)
-                        writer.writerow([patch_id, int(label[0])])
-
-        # Save the feature vector
-        feature_path = root_dir / "data/ct_images/features" / f"{patch_id}.pt"
-        feature_path.parent.mkdir(parents=True, exist_ok=True)
-        torch.save(feature_vector, feature_path)
-
-
-        patch_id+=1
+            # Save the features, prediction and labels
+            for i in range(len(prediction)):
+                writer.writerow([patch_id, label[i], prediction[i], feature_vector[i]])
+                patch_id += 1
 
 
 if __name__ == "__main__":
