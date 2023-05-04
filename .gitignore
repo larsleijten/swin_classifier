@@ -5,3 +5,4 @@ model/best_combined_model.pth
 model/best_mlp.pth
 
 
+__pycache__/

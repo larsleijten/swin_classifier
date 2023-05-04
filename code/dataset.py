@@ -9,9 +9,9 @@ from torch.utils.data import Dataset
 
 # The dataset that reads image patches and their labels 
 class patchDataset(Dataset):
-    def __init__(self, data_dir, transform=None):
+    def __init__(self, data_dir, transform=None, labels_path='/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/labels.csv'):
         self.data = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.nii.gz')]
-        self.labels = pd.read_csv('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/labels.csv')
+        self.labels = pd.read_csv(labels_path)
         self.transform = transform
 
     def __len__(self):
@@ -26,27 +26,27 @@ class patchDataset(Dataset):
         label_id = int(no_ext.split("/patches/",1)[1])
         label = self.labels.iloc[label_id][1]
 
-
         # Apply any transformations to the image and label
         # Transform all possible rotations and flips
         if self.transform is not None:
             data = self.transform(data)
             rand = np.random.rand(6)
             if rand[0]>0.5:
-                torch.flip(data, [0])
+                torch.flip(data, [-1])
             if rand[1]>0.5:
-                torch.flip(data, [1])
+                torch.flip(data, [-2])
             if rand[2]>0.5:
-                torch.flip(data, [2])
+                torch.flip(data, [-3])
             if rand[3]>0.5:
-                torch.transpose(data, 0, 1)
+                torch.transpose(data, -1, -2)
             if rand[4]>0.5:
-                torch.transpose(data, 0, 2)
+                torch.transpose(data, -1, -3)
             if rand[5]>0.5:
-                torch.transpose(data, 1, 2)
-            
+                torch.transpose(data, -2, -3)
 
+        data = data[None]
         return data, label
+
 
 # The dataset that reads feature vectors and their labels
 class featureDataset(Dataset):

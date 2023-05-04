@@ -34,7 +34,7 @@ def main(
     ])
 
     # Create the dataset that loads the patches
-    dataset = patchDataset(root_dir / "data/ct_images/patches", transforms)
+    dataset = patchDataset(root_dir / "data/ct_images/patches", transforms, labels_path=root_dir / "data/labels.csv")
     data_loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     swin_encoder = SwinEncoder(
@@ -50,7 +50,7 @@ def main(
 
     # Combine the two models make sure all parameters are training
     model = CombinedModel(swin_encoder, mlp_head).to(device, dtype=torch.float)
-    model.load_state_dict(torch.load(root_dir / "model/best_combined_model.pth"))
+    model.load_state_dict(torch.load(root_dir / "model/best_combined_model.pth", map_location=device))
 
     # No need to do dropout or batchnorm
     model.eval()
@@ -62,14 +62,17 @@ def main(
         # Create features
         patch_id = 0
         for batch, label in tqdm(data_loader):
-            batch = batch[None, :].to(device=device, dtype = torch.half)
+            batch = batch.to(device=device, dtype = torch.half)
             with torch.cuda.amp.autocast():
                 feature_vector = swin_encoder(batch)
                 prediction = mlp_head(feature_vector)
 
             # Save the features, prediction and labels
             for i in range(len(prediction)):
-                writer.writerow([patch_id, label[i], prediction[i], feature_vector[i]])
+                lbl = label[i].cpu().detach().numpy()
+                pred = prediction[i].cpu().detach().numpy()
+                feat = feature_vector[i].cpu().detach().numpy()
+                writer.writerow([patch_id, lbl, pred, feat])
                 patch_id += 1
 
 
