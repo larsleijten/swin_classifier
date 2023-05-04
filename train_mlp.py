@@ -60,7 +60,6 @@ def validation(val_loader, model, loss_fn, device):
 
 
 root_dir = "/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier"
-os.chdir(root_dir)
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
