@@ -1,3 +1,4 @@
+import json
 import os
 
 import nibabel as nib
@@ -61,4 +62,4 @@ class featureDataset(Dataset):
 
     def __getitem__(self, idx):
         # Return the feature vector and matching label
-        return self.data[idx], self.labels[idx]
+        return json.loads(self.data[idx]), self.labels[idx]

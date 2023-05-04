@@ -62,18 +62,20 @@ def main(
         # Create features
         patch_id = 0
         for batch, label in tqdm(data_loader):
+            # only works with batch size 1 for now
+            assert batch.shape[0] == 1
+
             batch = batch.to(device=device, dtype = torch.half)
             with torch.cuda.amp.autocast():
                 feature_vector = swin_encoder(batch)
                 prediction = mlp_head(feature_vector)
 
             # Save the features, prediction and labels
-            for i in range(len(prediction)):
-                lbl = label[i].cpu().detach().numpy()
-                pred = prediction[i].cpu().detach().numpy()
-                feat = feature_vector[i].cpu().detach().numpy()
-                writer.writerow([patch_id, lbl, pred, feat])
-                patch_id += 1
+            lbl = label[0].cpu().detach().numpy()
+            pred = prediction[0].cpu().detach().numpy()
+            feat = feature_vector.cpu().detach().numpy()
+            writer.writerow([patch_id, int(lbl), float(pred), str(list(feat))])
+            patch_id += 1
 
 
 if __name__ == "__main__":
