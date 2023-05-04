@@ -62,9 +62,9 @@ def main(
     # No need to do dropout or batchnorm
     model.eval()
 
-    with torch.no_grad(), open(root_dir / "data/feature_labels.csv", mode="w") as output_file:
+    with torch.no_grad(), open(root_dir / "data/features.csv", mode="w") as output_file:
         writer = csv.writer(output_file)
-        writer.writerow(["PatchID", "label"])
+        writer.writerow(["PatchID", "label", "prediction", "feature_vector"])
 
         # Create features
         patch_id = 0

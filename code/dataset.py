@@ -50,25 +50,15 @@ class patchDataset(Dataset):
 
 # The dataset that reads feature vectors and their labels
 class featureDataset(Dataset):
-    def __init__(self, data_dir, transform=None, path='/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/feature_labels.csv'):
-        self.data = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.pt')]
-        self.labels = pd.read_csv(path)
-        self.transform = transform
+    def __init__(self, path='/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/features.csv'):
+        df = pd.read_csv(path)
+        self.labels = df["label"]
+        self.prediction = df["prediction"]
+        self.data = df["feature_vector"]
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # Read the feature vector and find the matching label
-        tensor = torch.load(self.data[idx])
-        
-        no_ext = self.data[idx].split(".pt", 1)[0]
-        label_id = int(no_ext.split("/features/",1)[1])
-        label = self.labels.iloc[label_id][1]
-
-        
-        if self.transform is not None:
-            tensor = self.transform(tensor)
-
-        return tensor, label
-
+        # Return the feature vector and matching label
+        return self.data[idx], self.labels[idx]
