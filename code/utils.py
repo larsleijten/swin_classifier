@@ -33,8 +33,8 @@ def validation(val_loader, model, loss_fn, device):
             
     test_loss /= num_batches
     correct /= size
-    sensitivity = TP / (TP + FN) * 100
-    specificity = TN / (TN + FP) * 100
+    sensitivity = TP / (TP + FN + 0.001) * 100
+    specificity = TN / (TN + FP + 0.001) * 100
     print(f"Validation Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n Sensitivity: {sensitivity:>0.1f}%, \n Specificity: {specificity:>0.1f}%" )
     
     return test_loss, (100*correct)

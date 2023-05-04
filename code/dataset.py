@@ -53,7 +53,7 @@ class patchDataset(Dataset):
 class featureDataset(Dataset):
     def __init__(self, data_dir, transform=None):
         self.data = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.pt')]
-        self.labels = pd.read_csv('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/labels.csv')
+        self.labels = pd.read_csv('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/feature_labels.csv')
         self.transform = transform
 
     def __len__(self):

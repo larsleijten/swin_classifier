@@ -36,6 +36,26 @@ transforms = Compose([
 dataset = patchDataset('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/data/ct_images/patches', transforms)
 data_loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
+swin_encoder = SwinEncoder(
+    img_size=(96, 96, 96),
+    in_channels=1,
+    out_channels=1,
+    feature_size=48,
+    use_checkpoint=True,
+).to(device, dtype=torch.float)
+
+swin_weights = torch.load("/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/model_swinvit.pt")
+swin_encoder.load_from(weights=swin_weights)
+
+# Create the MLP-head
+mlp_head = MLPhead(20736).to(device, dtype=torch.float)
+
+
+# Combine the two models make sure all parameters are training
+model = CombinedModel(swin_encoder, mlp_head).to(device, dtype=torch.float)
+model.load_state_dict(torch.load("/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/best_combined_model.pth"))
+params = model.swin_encoder.state_dict()
+
 # Create the SwinEncoder which will encode the patches
 model = SwinEncoder(
     img_size=(96, 96, 96),
@@ -46,8 +66,8 @@ model = SwinEncoder(
 ).to(device)
 
 # Load pretrained weights
-weight = torch.load("/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/swin_classifier/model/model_swinvit.pt")
-model.load_from(weights=weight)
+
+model.load_state_dict(params)
 print("Using pretrained self-supervied Swin UNETR backbone weights !")
 
 # No need to track gradients

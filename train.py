@@ -46,6 +46,7 @@ dataset = patchDataset('/mnt/netcache/bodyct/experiments/scoliosis_simulation/lu
 dataset_size = len(dataset)
 train_size = int(0.8 * dataset_size)
 val_size = dataset_size - train_size
+torch.manual_seed(torch.initial_seed())
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
 # Create data loaders for the training and validation sets
@@ -80,7 +81,7 @@ for param in model.parameters():
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 loss_fn = nn.BCEWithLogitsLoss().to(device)
 
-epochs = 50
+epochs = 30
 model.train()
 train_loss = []
 val_loss = []
