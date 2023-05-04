@@ -1,30 +1,26 @@
 import sys
+
 sys.path.append('/mnt/netcache/bodyct/experiments/scoliosis_simulation/luna/')
 
-
-import tqdm
+import csv
 import os
 import random
-import csv
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-
-from tqdm import tqdm
-from torch.utils.data import DataLoader, random_split
-from torchvision.transforms import Compose, ToTensor, Normalize
+import tqdm
 from monai.config import print_config
+from torch.utils.data import DataLoader, random_split
+from torchvision.transforms import Compose, Normalize, ToTensor
+from tqdm import tqdm
 
 # Import created classes
-from swin_classifier.code import utils, dataset
-from swin_classifier.model import MLPhead, SwinEncoder, CombinedModel
-
-validation = utils.validation
-MLPhead = MLPhead.MLPhead
-SwinEncoder = SwinEncoder.SwinEncoder
-CombinedModel = CombinedModel.CombinedModel
-patchDataset = dataset.patchDataset
-featureDataset = dataset.featureDataset
+from swin_classifier.code.dataset import patchDataset
+from swin_classifier.code.utils import validation
+from swin_classifier.model.CombinedModel import CombinedModel
+from swin_classifier.model.MLPhead import MLPhead
+from swin_classifier.model.SwinEncoder import SwinEncoder
 
 print_config()
 
