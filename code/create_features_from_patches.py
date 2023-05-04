@@ -15,8 +15,10 @@ from torchvision.transforms import Compose, Normalize, ToTensor
 from tqdm import tqdm
 
 # Import created classes
-from swin_classifier.code import dataset, utils
-from swin_classifier.model import CombinedModel, MLPhead, SwinEncoder
+from swin_classifier.code.dataset import patchDataset
+from swin_classifier.model.CombinedModel import CombinedModel
+from swin_classifier.model.MLPhead import MLPhead
+from swin_classifier.model.SwinEncoder import SwinEncoder
 
 
 def main(
@@ -24,12 +26,6 @@ def main(
 ) -> None:
     root_dir = Path(root_dir)
 
-    validation = utils.validation
-    MLPhead = MLPhead.MLPhead
-    SwinEncoder = SwinEncoder.SwinEncoder
-    CombinedModel = CombinedModel.CombinedModel
-    patchDataset = dataset.patchDataset
-    featureDataset = dataset.patchDataset
 
     os.chdir(root_dir)
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
